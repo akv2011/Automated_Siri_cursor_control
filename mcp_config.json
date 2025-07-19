@@ -1,0 +1,8 @@
+{
+  "sms-cursor-bridge": {
+    "command": "python",
+    "args": [
+      "c:\\Users\\arunk\\Automated_Siri_cursor_control\\sms_mcp_bridge.py"
+    ]
+  }
+}

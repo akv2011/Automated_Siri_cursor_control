@@ -47,13 +47,9 @@ def activate_cursor_window():
         hwnd, window_text = cursor_windows[0]
         logger.info(f"Found Cursor window: {window_text}")
         
-        # Try to bring window to foreground (may fail due to Windows restrictions)
-        try:
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            win32gui.SetForegroundWindow(hwnd)
-        except Exception as e:
-            logger.warning(f"Could not set foreground window (this is normal): {e}")
-            # Continue anyway - we can still send keystrokes
+        # Bring window to foreground
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        win32gui.SetForegroundWindow(hwnd)
         
         # Wait for window to activate
         time.sleep(0.5)
@@ -65,34 +61,31 @@ def activate_cursor_window():
         return False
 
 def send_to_cursor_chat(message):
-    """Send a message directly to Cursor's chat input field"""
+    """Send a message directly to Cursor's AI chat input field - SIMPLIFIED"""
     try:
-        # Step 1: Activate Cursor window (continue even if activation fails)
-        activate_cursor_window()
+        # Step 1: Activate Cursor window
+        if not activate_cursor_window():
+            return {"success": False, "error": "Could not find or activate Cursor window"}
         
-        # Step 2: Try to open chat interface
-        # First, try to open a new chat (Ctrl+Shift+L is common for AI chat)
-        logger.info("Attempting to open Cursor chat...")
-        pyautogui.hotkey('ctrl', 'shift', 'l')
+        # Step 2: Simple approach - just open chat and type
+        logger.info("Opening Cursor AI chat...")
+        
+        # Try Ctrl+I for AI chat (most reliable)
+        pyautogui.hotkey('ctrl', 'i')
         time.sleep(1)
         
-        # Alternative: Try Ctrl+L for chat
-        pyautogui.hotkey('ctrl', 'l')
-        time.sleep(1)
-        
-        # Step 3: Type the message
+        # Step 3: Type the message directly
         logger.info(f"Typing message: {message[:50]}...")
-        pyautogui.typewrite(message, interval=0.02)
-        time.sleep(0.5)
+        pyautogui.typewrite(message, interval=0.01)  # Faster typing
         
-        # Step 4: Press Enter to send (comment out if you want user to review first)
-        # pyautogui.press('enter')
+        # Step 4: Press Enter to send
+        pyautogui.press('enter')
         
         logger.info(f"Successfully injected message: {message[:50]}...")
         
         return {
             "success": True, 
-            "message": f"Message injected into Cursor: {message}",
+            "message": f"Message injected into Cursor AI chat: {message}",
             "timestamp": datetime.now().isoformat()
         }
         

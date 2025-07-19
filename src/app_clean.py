@@ -312,7 +312,7 @@ def trigger_automation():
         result = perform_cursor_action(action_data)
         
         add_log('ACTION_PERFORMED', f'Action completed: {action_data.description}', 
-               action=f'{action_data.action}', result=result[:100] + '...' if len(result) > 100 else result)
+               action=f'{action_data.action.value}', result=result[:100] + '...' if len(result) > 100 else result)
         
         return f"""
         <h2>✅ Automation Triggered Successfully!</h2>
@@ -347,7 +347,7 @@ def simulate_sms():
         result = perform_cursor_action(action_data)
         
         add_log('ACTION_PERFORMED', f'Processed: {action_data.description}', 
-               phone_number=from_number, action=f'{action_data.action}', result=result[:100])
+               phone_number=from_number, action=f'{action_data.action.value}', result=result[:100])
         
         # Create a structured response
         sms_response = SMSResponse(
@@ -405,7 +405,7 @@ def clear_logs():
 def send_sms():
     """Send SMS FROM Twilio number to trigger automation"""
     message = request.args.get('message', 'Create a hello world Python script')
-    to_number = request.args.get('to', '+919360011424')  # Valid verified number
+    to_number = request.args.get('to', '+1234567890')  # Default test number
     
     if not twilio_client:
         return """
@@ -462,7 +462,7 @@ def sms_webhook():
         action_data = process_with_gemini(incoming_msg)
         print(f"🤖 Gemini processed: {action_data.action} - {action_data.description}")
         add_log('ACTION_PERFORMED', f'Gemini processed: {action_data.description}', 
-               phone_number=from_number, action=f'{action_data.action}')
+               phone_number=from_number, action=f'{action_data.action.value}')
         
         # Perform the action in Cursor
         result = perform_cursor_action(action_data)
