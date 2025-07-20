@@ -10,7 +10,7 @@ def test_phone_numbers():
     twilio_number = "+12295970631"
     
     # Target phone number (sends TO) 
-    target_number = "+919360011424"
+    target_number = "+917007646200"
     
     print("📱 SMS Automation Test")
     print("=" * 40)

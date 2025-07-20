@@ -12,7 +12,6 @@ class ActionType(str, Enum):
     RUN_CODE = "run_code"
     SEARCH_CODE = "search_code"
     OPEN_FILE = "open_file"
-    EXECUTE_COMMAND = "execute_command"
     ERROR = "error"
 
 class CursorAction(BaseModel):

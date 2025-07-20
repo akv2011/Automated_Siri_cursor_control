@@ -1,0 +1,55 @@
+[
+    {
+        "key": "ctrl+i",
+        "command": "composerMode.agent"
+    },
+    {
+        "key": "ctrl+shift+l",
+        "command": "cursor.chat.addSelectedCode",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "ctrl+enter", 
+        "command": "cursor.chat.acceptAllChanges",
+        "when": "cursor.chat.inProgress"
+    },
+    {
+        "key": "ctrl+backspace",
+        "command": "cursor.chat.rejectAllChanges", 
+        "when": "cursor.chat.inProgress"
+    },
+    {
+        "key": "ctrl+shift+backspace",
+        "command": "cursor.chat.cancelGeneration"
+    },
+    {
+        "key": "alt+enter",
+        "command": "cursor.chat.overrideQueue"
+    },
+    {
+        "key": "ctrl+shift+v",
+        "command": "cursor.chat.addClipboardToInput"
+    },
+    {
+        "key": "ctrl+shift+a",
+        "command": "editor.action.selectAll",
+        "when": "cursor.chat.focus"
+    },
+    {
+        "key": "tab",
+        "command": "cursor.chat.cycleToNextMessage"
+    },
+    {
+        "key": "shift+tab", 
+        "command": "cursor.chat.cycleToPreviousMessage"
+    },
+    {
+        "key": "ctrl+r",
+        "command": "cursor.chat.newChat"
+    },
+    {
+        "key": "ctrl+alt+c",
+        "command": "editor.action.clipboardCopyAction",
+        "when": "cursor.chat.focus"
+    }
+]
