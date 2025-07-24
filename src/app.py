@@ -268,7 +268,7 @@ def generate_result_summary(original_message, action_data, cursor_result):
         # Remove quotes if present
         summary = summary.strip('"').strip("'")
         
-        return summary[:100]  # Limit to 100 chars for phone UI
+        return summary[:100]  # Limit to 100 chars for SMS response
         
     except Exception as e:
         print(f"Error generating summary: {e}")
@@ -383,13 +383,8 @@ def home():
             </div>
             
             <div class="section">
-                <h3>📱 Phone Interface</h3>
-                <p>iPhone-style messaging interface:</p>
-                <a href="/phone" class="btn btn-success">📱 Open Phone UI</a>
-                <br><br>
-                <p>Simulate SMS webhook:</p>
-                <a href="/simulate_sms?message=Create a Python calculator&from=+14322000592" class="btn btn-success">📱 Simulate SMS</a>
-                <br><br>
+                <h3>🎯 SMS and MCP Integration</h3>
+                <p>Core functionality - SMS webhooks and MCP tools:</p>
                 <p>Test Cursor Bridge:</p>
                 <a href="/test_bridge" class="btn btn-primary">🔧 Test Bridge</a>
                 <br><br>
@@ -452,151 +447,9 @@ def trigger_automation():
         <a href='/'>← Back to Dashboard</a>
         """
 
-@app.route('/api/simulate_sms', methods=['GET', 'POST'])
-def api_simulate_sms():
-    """API endpoint for phone UI - sends directly to bridge like dashboard"""
-    if request.method == 'POST':
-        data = request.get_json()
-        message = data.get('message', 'Create a hello world Python script')
-        from_number = data.get('from', '+14322000592')
-    else:
-        message = request.args.get('message', 'Create a hello world Python script')
-        from_number = request.args.get('from', '+14322000592')
-    
-    try:
-        add_log('SMS_RECEIVED', f'Phone UI SMS: {message}', phone_number=from_number)
-        
-        # Send directly to bridge like the dashboard "Test Now" button
-        try:
-            # First try Enhanced Bridge (port 5002), then fallback to Simple Bridge (port 5001)
-            bridge_url = None
-            bridge_name = None
-            
-            try:
-                health_check = requests.get("http://localhost:5002/health", timeout=5)
-                if health_check.status_code == 200:
-                    bridge_url = "http://localhost:5002/inject"
-                    bridge_name = "Enhanced Bridge"
-                else:
-                    raise requests.exceptions.ConnectionError("Enhanced bridge not available")
-            except:
-                try:
-                    health_check = requests.get("http://localhost:5001/health", timeout=5)
-                    if health_check.status_code == 200:
-                        bridge_url = "http://localhost:5001/inject"
-                        bridge_name = "Simple Bridge"
-                    else:
-                        raise requests.exceptions.ConnectionError("Simple bridge not available")
-                except:
-                    error_msg = "No bridge running on ports 5001 or 5002"
-                    add_log('ERROR', error_msg, phone_number=from_number)
-                    return {
-                        'success': False,
-                        'error': error_msg,
-                        'timestamp': datetime.now().strftime('%H:%M:%S')
-                    }
-            
-            bridge_response = requests.post(
-                bridge_url,
-                json={"message": message},
-                timeout=60  # Increased timeout to 60 seconds
-            )
-            
-            if bridge_response.status_code == 200:
-                bridge_result = bridge_response.json()
-                
-                # Return the bridge response directly
-                cursor_response = bridge_result.get("cursor_response", "Message sent to Cursor AI")
-                
-                add_log('ACTION_PERFORMED', f'Phone UI sent to {bridge_name}: {message[:50]}', 
-                       phone_number=from_number, action=f'direct_{bridge_name.lower().replace(" ", "_")}', result=cursor_response[:100])
-                
-                return {
-                    'success': True,
-                    'message': message,
-                    'cursor_response': cursor_response,
-                    'timestamp': datetime.now().strftime('%H:%M:%S')
-                }
-            else:
-                error_msg = f"Bridge error: {bridge_response.status_code}"
-                add_log('ERROR', error_msg, phone_number=from_number)
-                return {
-                    'success': False,
-                    'error': error_msg,
-                    'timestamp': datetime.now().strftime('%H:%M:%S')
-                }
-                
-        except requests.exceptions.ConnectionError:
-            error_msg = "Cannot connect to Cursor Bridge - make sure it's running"
-            add_log('ERROR', error_msg, phone_number=from_number)
-            return {
-                'success': False,
-                'error': error_msg,
-                'timestamp': datetime.now().strftime('%H:%M:%S')
-            }
-        except requests.exceptions.Timeout:
-            error_msg = "Bridge timeout - operation may still be running"
-            add_log('ERROR', error_msg, phone_number=from_number)
-            return {
-                'success': False,
-                'error': error_msg,
-                'timestamp': datetime.now().strftime('%H:%M:%S')
-            }
-        
-    except Exception as e:
-        add_log('ERROR', f'Phone UI error: {str(e)}', phone_number=from_number)
-        return {
-            'success': False,
-            'message': message,
-            'error': str(e),
-            'timestamp': datetime.now().strftime('%H:%M:%S')
-        }
+# Phone UI simulation endpoints removed - keeping only core MCP functionality
 
-@app.route('/simulate_sms', methods=['GET'])
-def simulate_sms():
-    """Simulate receiving an SMS (for testing)"""
-    message = request.args.get('message', 'Create a hello world Python script')
-    from_number = request.args.get('from', '+14322000592')
-    to_number = request.args.get('to', '+18777804236')
-    
-    try:
-        add_log('SMS_RECEIVED', f'Simulated SMS: {message}', phone_number=from_number)
-        
-        # Process the message with Gemini
-        action_data = process_with_gemini(message)
-        
-        # Perform the action in Cursor
-        result = perform_cursor_action(action_data)
-        
-        add_log('ACTION_PERFORMED', f'Processed: {action_data.description}', 
-               phone_number=from_number, action=f'{action_data.action}', result=result[:100])
-        
-        # Create a structured response
-        sms_response = SMSResponse(
-            message=f"✅ Command: {message[:30]}...\n🎯 Action: {action_data.description[:50]}...\n📄 Result: {result[:50]}...",
-            success=action_data.action != ActionType.ERROR,
-            action_performed=action_data.description
-        )
-        
-        add_log('SMS_SENT', f'Response sent: {sms_response.message[:50]}...', phone_number=from_number)
-        
-        return f"""
-        <h2>✅ SMS Simulation Complete!</h2>
-        <p><strong>Received from:</strong> {from_number}</p>
-        <p><strong>Message:</strong> {message}</p>
-        <p><strong>Action:</strong> {action_data.description}</p>
-        <p><strong>Result:</strong> {result}</p>
-        <p><strong>Response sent:</strong> {sms_response.message}</p>
-        <a href='/'>← Back to Dashboard</a>
-        """
-        
-    except Exception as e:
-        add_log('ERROR', f'SMS simulation error: {str(e)}', phone_number=from_number)
-        return f"""
-        <h2>❌ Error</h2>
-        <p>{str(e)}</p>
-        <a href='/'>← Back to Dashboard</a>
-        """
+# SMS simulation endpoint removed - keeping only core MCP functionality
 
 @app.route('/logs', methods=['GET'])
 def get_logs():
@@ -793,7 +646,7 @@ def api_send_sms():
         return {'success': False, 'error': 'No message provided'}
     
     try:
-        add_log('SMS_RECEIVED', f'Phone UI (SMS Mode): {message}', phone_number=from_number)
+        add_log('SMS_RECEIVED', f'SMS Mode: {message}', phone_number=from_number)
         
         # Process the message with Gemini
         action_data = process_with_gemini(message)
@@ -857,7 +710,7 @@ def api_sms_challenge():
         return {'success': False, 'error': 'No message provided'}
     
     try:
-        add_log('SMS_RECEIVED', f'Phone UI (Challenge Mode): {message}', phone_number=from_number)
+        add_log('SMS_RECEIVED', f'Challenge Mode: {message}', phone_number=from_number)
         
         # Use MCP tools directly - let them handle both UI response and SMS sending
         try:
@@ -1047,294 +900,7 @@ Automated via SMS bridge"""
             'timestamp': datetime.now().strftime('%H:%M:%S')
         }
 
-@app.route('/phone')
-def phone_interface():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>SMS to Cursor</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: #f6f6f6;
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-            }
-            
-            .header {
-                background: #f6f6f6;
-                padding: 15px;
-                text-align: center;
-                border-bottom: 1px solid #d1d1d6;
-                color: #8e8e93;
-                font-size: 13px;
-                position: relative;
-            }
-            
-            
-            
-            .messages {
-                flex: 1;
-                padding: 20px;
-                overflow-y: auto;
-                background: #f6f6f6;
-            }
-            
-            .message {
-                display: flex;
-                margin-bottom: 10px;
-            }
-            
-            .message.sent {
-                justify-content: flex-end;
-            }
-            
-            .message.received {
-                justify-content: flex-start;
-            }
-            
-            .bubble {
-                padding: 12px 16px;
-                border-radius: 18px;
-                max-width: 70%;
-                font-size: 16px;
-                word-wrap: break-word;
-            }
-            
-            .sent .bubble {
-                background: #34c759;
-                color: white;
-                margin-left: auto;
-            }
-            
-            .received .bubble {
-                background: #e5e5ea;
-                color: black;
-            }
-            
-            
-            .input-area {
-                background: #f6f6f6;
-                border-top: 1px solid #d1d1d6;
-                padding: 15px;
-                display: flex;
-                gap: 10px;
-                align-items: center;
-            }
-            
-            .text-input {
-                flex: 1;
-                background: white;
-                border: 1px solid #d1d1d6;
-                border-radius: 20px;
-                padding: 12px 16px;
-                font-size: 16px;
-                outline: none;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            }
-            
-            .text-input::placeholder {
-                color: #c7c7cc;
-            }
-            
-            #promptSelector {
-                background: white;
-                border: 1px solid #d1d1d6;
-                border-radius: 15px;
-                padding: 8px 12px;
-                margin-right: 10px;
-                font-size: 14px;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                appearance: none;
-                -webkit-appearance: none;
-                -moz-appearance: none;
-                background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23666" d="M6 8L0 2h12z"/></svg>');
-                background-repeat: no-repeat;
-                background-position: right 10px center;
-                padding-right: 30px;
-                direction: ltr;
-                transform: none;
-                position: relative;
-                z-index: 1;
-            }
-            
-            /* Force dropdown to open downward */
-            #promptSelector:focus {
-                transform: translateY(0);
-                top: auto;
-                bottom: auto;
-            }
-            
-            #promptSelector option {
-                background: white;
-                color: black;
-                padding: 8px;
-                direction: ltr;
-                text-align: left;
-            }
-            
-            .send-btn {
-                background: transparent;
-                color: transparent;
-                border: none;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                cursor: pointer;
-                font-size: 16px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                opacity: 0;
-                pointer-events: auto;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <div class="left-icons">
-                <a href="/" style="color: #007aff; text-decoration: none;"></a>
-            </div>
-            <div class="center-content">
-                <div style="font-weight: 600; color: #000; font-size: 16px;">Text Message • SMS</div>
-                <span id="time"></span>
-            </div>
-            <div class="right-icons">
-                <span style="color: #007aff;"></span>
-            </div>
-        </div>
-        
-        <div class="messages" id="messages"></div>
-        
-        <div class="input-area">
-            <select id="promptSelector">
-                <option value="">Choose a challenge prompt...</option>
-                <option value="find files larger than 300 lines">🔍 Find files larger than 300 lines</option>
-                <option value="count tests">📊 Count the number of tests we have</option>
-                <option value="analyze codebase">📈 Analyze codebase structure and statistics</option>
-            </select>
-            <input type="text" class="text-input" id="messageInput" 
-                   placeholder="Send to Cursor AI..." 
-                   value="">
-            <button class="send-btn" id="sendBtn" style="opacity: 1; background: #007aff; color: white; pointer-events: auto;">→</button>
-        </div>
-        
-        <script>
-            // Update time
-            function updateTime() {
-                const now = new Date();
-                const time = now.toLocaleTimeString('en-US', { 
-                    hour: 'numeric', 
-                    minute: '2-digit',
-                    hour12: true 
-                });
-                document.getElementById('time').textContent = `Today ${time}`;
-            }
-            updateTime();
-            setInterval(updateTime, 60000);
-            
-            const messagesDiv = document.getElementById('messages');
-            const messageInput = document.getElementById('messageInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const promptSelector = document.getElementById('promptSelector');
-            
-            // Handle dropdown selection
-            promptSelector.addEventListener('change', function() {
-                if (this.value) {
-                    messageInput.value = this.value;
-                    this.value = ''; // Reset dropdown
-                }
-            });
-            
-            // Send message function
-            function sendMessage() {
-                const message = messageInput.value.trim();
-                if (!message) return;
-                
-                // Add sent message
-                addMessage(message, 'sent');
-                messageInput.value = '';
-                
-                // Send to server (try MCP first, then fallback to bridge)
-                fetch('/api/sms_challenge', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message, from: '+14322000592' })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('MCP Response:', data);
-                    
-                    // If MCP worked, show the response
-                    if (data.success && data.cursor_response) {
-                        addMessage(data.cursor_response, 'received');
-                    } else {
-                        // Fallback to bridge if MCP failed
-                        fetch('/api/simulate_sms', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ message: message, from: '+14322000592' })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('Bridge Response:', data);
-                            if (data.success && data.cursor_response) {
-                                addMessage(data.cursor_response, 'received');
-                            } else if (data.success) {
-                                addMessage('Message sent to Cursor successfully', 'received');
-                            } else {
-                                addMessage('Error: ' + (data.error || 'Failed to send message'), 'received');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Bridge Error:', error);
-                            addMessage('Connection error', 'received');
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    addMessage('Connection error', 'received');
-                });
-            }
-            
-            // Add message to chat
-            function addMessage(text, type, id) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${type}`;
-                if (id) messageDiv.id = id;
-                
-                const bubbleDiv = document.createElement('div');
-                bubbleDiv.className = 'bubble';
-                bubbleDiv.textContent = text;
-                
-                messageDiv.appendChild(bubbleDiv);
-                messagesDiv.appendChild(messageDiv);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }
-            
-            // Event listeners
-            sendBtn.addEventListener('click', sendMessage);
-            
-            messageInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-        </script>
-    </body>
-    </html>
-    """
+# Phone UI endpoint removed - keeping only core MCP functionality
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

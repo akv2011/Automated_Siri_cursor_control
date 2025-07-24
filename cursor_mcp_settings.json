@@ -1,16 +1,5 @@
 {
   "mcpServers": {
-    "weather": {
-      "command": "C:/ProgramData/miniconda3/Scripts/conda.exe",
-      "args": [
-        "run",
-        "-p",
-        "C:\\Users\\arunk\\.conda\\envs\\siri",
-        "--no-capture-output",
-        "python",
-        "c:\\Users\\arunk\\Automated_Siri_cursor_control\\weather_mcp_server.py"
-      ]
-    },
     "sms-cursor-bridge": {
       "command": "C:/ProgramData/miniconda3/Scripts/conda.exe",
       "args": [

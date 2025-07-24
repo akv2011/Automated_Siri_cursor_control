@@ -1,3 +1,27 @@
+# SMS-to-Cursor Automation - Git Ignore File
+
+# Environment Variables (CRITICAL - Contains API Keys)
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# API Keys and Secrets (CRITICAL)
+*.key
+*.pem
+*.p12
+*.pfx
+secrets.json
+credentials.json
+config/secrets.json
+
+# Twilio and SMS specific
+twilio_config.json
+sms_history.json
+automation_history.json
+cursor_actions.log
+
 # Python
 __pycache__/
 *.py[cod]
@@ -23,24 +47,58 @@ MANIFEST
 
 # Environment
 .env
+.env.local
+.env.production
+.env.staging
+.env.development
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.conda/
+conda-meta/
+
+# Virtual Environments & Package Managers
+pipenv/
+Pipfile.lock
+poetry.lock
+.python-version
 
 # IDE
 .vscode/
 .idea/
+.cursor/
+cursor_workspace/
 *.swp
 *.swo
 *~
+.spyderproject
+.spyproject
+.ropeproject
+
+# MCP Configuration (may contain sensitive paths)
+mcp_config.json
+*.mcp.json
+cursor_mcp_settings.json
 
 # Logs
 *.log
+logs/
 logs/*.log
 sms_cursor_log.json
+debug.log
+error.log
+access.log
+twilio_logs/
+automation_logs/
+cursor_automation.log
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
 
 # OS
 .DS_Store
@@ -50,17 +108,44 @@ sms_cursor_log.json
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Windows specific
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 
 # Project specific
 ngrok.exe
 ngrok
 *.ngrok
+ngrok_auth.txt
+
+# SMS and Automation specific
+sms_responses.json
+cursor_command_history.json
+automation_results/
+test_sms_logs/
 
 # Temporary files
 *.tmp
 *.temp
 temp/
 tmp/
+.cache/
+*.bak
+*.backup
+*_backup.*
+*.orig
+
+# Runtime and Process Files
+*.pid
+*.seed
+*.pid.lock
 
 # Testing
 .pytest_cache/
